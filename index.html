@@ -281,6 +281,51 @@
     .btn-group button:not(:first-child) {
       border-left: 1px solid #e0e3e8;
     }
+    .field-tip {
+      display: inline-block;
+      margin-left: 3px;
+      color: #bbb;
+      background: #f5f5f5;
+      border-radius: 50%;
+      width: 16px;
+      height: 16px;
+      text-align: center;
+      font-size: 12px;
+      line-height: 16px;
+      cursor: pointer;
+      border: 1px solid #e0e0e0;
+      font-style: normal;
+    }
+    .field-tip:hover {
+      color: #409EFF;
+      background: #eaf4ff;
+      border-color: #b3d8ff;
+    }
+    /* 在erp-filter-bar最后加导出和刷新按钮 */
+    .erp-filter-bar .filter-actions {
+      margin-left: auto;
+      display: flex;
+      gap: 8px;
+    }
+    .erp-filter-bar .filter-action-btn {
+      width: 32px;
+      height: 32px;
+      border-radius: 6px;
+      border: none;
+      background: #f5f7fa;
+      color: #409EFF;
+      font-size: 16px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: background 0.2s, color 0.2s;
+      box-shadow: 0 1px 4px #409eff22;
+    }
+    .erp-filter-bar .filter-action-btn:hover {
+      background: #eaf4ff;
+      color: #3076d6;
+    }
   </style>
 </head>
 <body>
@@ -321,14 +366,19 @@
             <select><option>ASIN</option></select>
             <input placeholder="请输入ASIN，多个ASIN换行再写">
             <select><option>Manufacturin</option></select>
+            <div class="filter-actions">
+              <button class="filter-action-btn" title="导出">⭳</button>
+              <button class="filter-action-btn" title="刷新">⟳</button>
+            </div>
           </div>
           <div class="erp-table-wrap" id="day-table-wrap"></div>
           <script>
             // 字段定义
             const dayFields = [
-              { key: 'asinCombo', label: 'ASIN组合' },
-              { key: 'sku', label: '硕麦SKU/MSKU' },
-              { key: 'team', label: '团队/销售负责人' },
+              { key: 'asinCombo', label: 'ASIN组合', style: 'min-width:160px;' },
+              { key: 'shop', label: '店铺-站点/MSKU', style: 'min-width:120px;' },
+              { key: 'product', label: '产品名称/硕麦SKU', style: 'min-width:140px;' },
+              { key: 'team', label: '团队/销售负责人', style: 'min-width:110px;' },
               { key: 'stock', label: '库存报告数据' },
               { key: 'subtotal', label: '小计' },
               { key: 'd1', label: '2025-07-10' },
@@ -343,7 +393,8 @@
             const dayAsinRows = [
               {
                 asinCombo: `<div style='display:flex;align-items:flex-start;gap:4px;'><img src='https://via.placeholder.com/32' style='width:32px;height:32px;border-radius:4px;object-fit:cover;'><div>OVERMONT Camping Kochgeschirr Set<br><a href='#' style='color:#409EFF;text-decoration:underline;font-size:13px;'>B07D6JCHKS</a><span style='color:#888;font-size:13px;'>Overmont VC_DE</span></div></div>`,
-                sku: '硕麦SKU：O505779<br>MSKU：sku_B07D6JCHKS',
+                shop: 'Overmont VC_DE<br>MSKU：sku_B07D6JCHKS',
+                product: 'OVERMONT Camping Kochgeschirr Set<br>硕麦SKU：O505779',
                 team: '团队：德国组<br>销售负责人：张三',
                 stock: '采购数量：494<br>接收数量：--<br>库存数量：404<br>VC理论在库：90',
                 subtotal: 838,
@@ -351,7 +402,8 @@
               },
               {
                 asinCombo: `<div style='display:flex;align-items:flex-start;gap:4px;'><img src='https://via.placeholder.com/32' style='width:32px;height:32px;border-radius:4px;object-fit:cover;'><div>OVERMONT Camping Cookware Set<br><a href='#' style='color:#409EFF;text-decoration:underline;font-size:13px;'>B07D6JCHKT</a><span style='color:#888;font-size:13px;'>Overmont VC_UK</span></div></div>`,
-                sku: '硕麦SKU：O505780<br>MSKU：sku_B07D6JCHKT',
+                shop: 'Overmont VC_UK<br>MSKU：sku_B07D6JCHKT',
+                product: 'OVERMONT Camping Cookware Set<br>硕麦SKU：O505780',
                 team: '团队：英国组<br>销售负责人：李四',
                 stock: '采购数量：494<br>接收数量：--<br>库存数量：404<br>VC理论在库：90',
                 subtotal: 267,
@@ -363,7 +415,8 @@
                 parentId: 1,
                 parent: {
                   asinCombo: '父ASIN：B07D6JCHKS（Overmont Camping Kochgeschirr Set）',
-                  sku: '无',
+                  shop: '无',
+                  product: '无',
                   team: '无',
                   stock: '采购数量：494<br>接收数量：--<br>库存数量：404<br>VC理论在库：90',
                   subtotal: 1105,
@@ -380,28 +433,44 @@
               const wrap = document.getElementById('day-table-wrap');
               let html = '<table><thead><tr>';
               if(dayAsinType === 'parent') html += '<th></th>';
-              dayFields.forEach(f => html += `<th>${f.label}</th>`);
+              dayFields.forEach(f => html += `<th${f.style ? ` style="${f.style}"` : ''}>${f.label}</th>`);
               html += '</tr></thead><tbody>';
               if(dayAsinType === 'asin' || dayAsinType === 'sku') {
                 dayAsinRows.forEach(row => {
                   html += '<tr>';
-                  dayFields.forEach(f => html += `<td>${row[f.key] || ''}</td>`);
+                  dayFields.forEach(f => html += `<td${f.style ? ` style="${f.style}"` : ''}>${row[f.key] || ''}</td>`);
                   html += '</tr>';
                 });
               } else {
                 dayParentAsinRows.forEach(parent => {
                   html += `<tr class='parent-row' data-parent='${parent.parentId}'><td><button class='expand-btn' onclick='toggleChildRows(${parent.parentId})'>＋</button></td>`;
-                  dayFields.forEach(f => html += `<td>${parent.parent[f.key] || ''}</td>`);
+                  dayFields.forEach(f => html += `<td${f.style ? ` style="${f.style}"` : ''}>${parent.parent[f.key] || ''}</td>`);
                   html += '</tr>';
                   parent.children.forEach(child => {
                     html += `<tr class='child-row child-of-${parent.parentId}' style='display:none;'>`;
                     html += '<td></td>';
-                    dayFields.forEach(f => html += `<td>${child[f.key] || ''}</td>`);
+                    dayFields.forEach(f => html += `<td${f.style ? ` style="${f.style}"` : ''}>${child[f.key] || ''}</td>`);
                     html += '</tr>';
                   });
                 });
               }
-              html += '</tbody></table>';
+              // 合计行
+              html += '<tfoot><tr class="erp-table-footer">';
+              if(dayAsinType === 'parent') html += '<td>合计</td>';
+              else html += '<td>合计</td>';
+              dayFields.forEach((f, i) => {
+                if(i === 4) html += '<td>库存数量：808<br>VC理论在库：180</td>';
+                else if(i === 5) html += '<td>1105</td>'; // 小计
+                else if(i >= 6) html += `<td>${[62,275,229,79,99,62,56][i-6]}</td>`; // 各天
+                else if(i > 0) html += '<td></td>';
+              });
+              html += '</tr></tfoot>';
+              html += '</table>';
+              // 分页栏
+              html += `<div class="erp-table-pagination" style="justify-content:space-between;">
+                <div><span>50条/页</span><span>共2条</span></div>
+                <div><button disabled class="active">1</button><span>前往</span><input type="number" min="1" max="1" value="1" style="width:40px;"><span>页</span></div>
+              </div>`;
               wrap.innerHTML = html;
               // 修正按钮高亮
               var btnParent = document.getElementById('btn-day-parent-asin');
@@ -523,45 +592,52 @@
               <option value="manufacturing" selected>Manufacturing</option>
               <option value="sourcing">Sourcing</option>
             </select>
+            <div class="filter-actions">
+              <button class="filter-action-btn" title="导出">⭳</button>
+              <button class="filter-action-btn" title="刷新">⟳</button>
+            </div>
           </div>
           <!-- 汇总表格区域 -->
           <div class="erp-table-wrap" id="summary-table-wrap"></div>
           <script>
-            // 字段定义
+            // 字段定义，增加tip属性
             const summaryFields = {
               manufacturing: [
-                { key: 'asinCombo', label: 'ASIN组合' },
-                { key: 'sku', label: '硕麦SKU / MSKU' },
-                { key: 'team', label: '团队/销售负责人' },
-                { key: 'saleCount', label: '销售统计' },
-                { key: 'saleAmount', label: '销售金额' },
+                { key: 'asinCombo', label: 'ASIN组合', style: 'min-width:180px;' },
+                { key: 'shop', label: '店铺-站点/MSKU', style: 'min-width:140px;' },
+                { key: 'product', label: '产品名称/硕麦SKU', style: 'min-width:160px;' },
+                { key: 'team', label: '团队/销售负责人', style: 'min-width:120px;' },
+                { key: 'saleCount', label: '销量统计', tip: '亚马逊卖给客户的订单数量' },
+                { key: 'saleAmount', label: '销售金额', tip: '亚马逊卖给客户的订单总金额' },
                 { key: 'avgDaySale', label: '平均每日销量' },
                 { key: 'avgPrice', label: '平均单价' },
-                { key: 'outCount', label: '出货数量' },
-                { key: 'outAmount', label: '出货金额(cost)' },
-                { key: 'refundCount', label: '退款数量' },
-                { key: 'netPPM', label: 'Net PPM%' },
+                { key: 'outCount', label: '出货数量', tip: '亚马逊仓库出货数量' },
+                { key: 'outAmount', label: '出货金额', tip: '亚马逊仓库出货总成本(po供货成本)' },
+                { key: 'refundCount', label: '退货数量', tip: '客户退到亚马逊仓库的数量' },
+                { key: 'netPPM', label: 'Net PPM%', tip: '亚马逊的利润率，亚马逊计算得出' },
                 { key: 'visit', label: '访问量' },
-                { key: 'rate', label: '转化率' },
-                { key: 'refundRate', label: '退款率' }
+                { key: 'rate', label: '转化率', tip: '销量/访问量' },
+                { key: 'refundRate', label: '退货率', tip: '退货数量/销售数量' }
               ],
               sourcing: [
-                { key: 'asinCombo', label: 'ASIN组合' },
-                { key: 'sku', label: '硕麦SKU / MSKU' },
-                { key: 'team', label: '团队/销售负责人' },
-                { key: 'outCount', label: '出货数量' },
-                { key: 'outAmount', label: '出货金额(cost)' },
-                { key: 'refundCount', label: '退款数量' },
+                { key: 'asinCombo', label: 'ASIN组合', style: 'min-width:180px;' },
+                { key: 'shop', label: '店铺-站点/MSKU', style: 'min-width:140px;' },
+                { key: 'product', label: '产品名称/硕麦SKU', style: 'min-width:160px;' },
+                { key: 'team', label: '团队/销售负责人', style: 'min-width:120px;' },
+                { key: 'outCount', label: '出货数量', tip: '亚马逊仓库出货数量' },
+                { key: 'outAmount', label: '出货金额', tip: '亚马逊仓库出货总成本(po供货成本)' },
+                { key: 'refundCount', label: '退货数量', tip: '客户退到亚马逊仓库的数量' },
                 { key: 'visit', label: '访问量' },
-                { key: 'rate', label: '转化率' },
-                { key: 'refundRate', label: '退款率' }
+                { key: 'rate', label: '转化率', tip: '销量/访问量' },
+                { key: 'refundRate', label: '退货率', tip: '退货数量/销售数量' }
               ]
             };
             // 示例数据（多条）
             const asinRows = [
               {
                 asinCombo: `<div style='display:flex;align-items:flex-start;gap:4px;'><img src='https://via.placeholder.com/32' style='width:32px;height:32px;border-radius:4px;object-fit:cover;'><div>OVERMONT Camping Kochgeschirr Set Outdoor<br><a href='#' style='color:#409EFF;text-decoration:underline;font-size:13px;'>B07D6JCHKS</a><span style='color:#888;font-size:13px;'>Overmont-VC_DE</span></div></div>`,
-                sku: '硕麦SKU：O505759<br>MSKU：sku_B07D6JCHKS',
+                shop: 'Overmont-VC_DE<br>MSKU：sku_B07D6JCHKS',
+                product: 'OVERMONT Camping Kochgeschirr Set Outdoor<br>硕麦SKU：O505759',
                 team: '团队：德国组<br>销售负责人：张三',
                 saleCount: 838,
                 saleAmount: '€ 19535.65',
@@ -577,7 +653,8 @@
               },
               {
                 asinCombo: `<div style='display:flex;align-items:flex-start;gap:4px;'><img src='https://via.placeholder.com/32' style='width:32px;height:32px;border-radius:4px;object-fit:cover;'><div>OVERMONT Camping Cookware Set Outdoor<br><a href='#' style='color:#409EFF;text-decoration:underline;font-size:13px;'>B07D6JCHKT</a><span style='color:#888;font-size:13px;'>Overmont-VC_UK</span></div></div>`,
-                sku: '硕麦SKU：O505760<br>MSKU：sku_B07D6JCHKT',
+                shop: 'Overmont-VC_UK<br>MSKU：sku_B07D6JCHKT',
+                product: 'OVERMONT Camping Cookware Set Outdoor<br>硕麦SKU：O505760',
                 team: '团队：英国组<br>销售负责人：李四',
                 saleCount: 267,
                 saleAmount: '£ 5378.00',
@@ -593,7 +670,8 @@
               },
               {
                 asinCombo: `<div style='display:flex;align-items:flex-start;gap:4px;'><img src='https://via.placeholder.com/32' style='width:32px;height:32px;border-radius:4px;object-fit:cover;'><div>OVERMONT Kit de Casseroles Camping<br><a href='#' style='color:#409EFF;text-decoration:underline;font-size:13px;'>B07D6JCHKF</a><span style='color:#888;font-size:13px;'>Overmont-VC_FR</span></div></div>`,
-                sku: '硕麦SKU：O505761<br>MSKU：sku_B07D6JCHKF',
+                shop: 'Overmont-VC_FR<br>MSKU：sku_B07D6JCHKF',
+                product: 'OVERMONT Kit de Casseroles Camping<br>硕麦SKU：O505761',
                 team: '团队：法国组<br>销售负责人：王五',
                 saleCount: 72,
                 saleAmount: '€ 1726.59',
@@ -613,7 +691,8 @@
                 parentId: 1,
                 parent: {
                   asinCombo: '父ASIN：B07D6JCHKS（Overmont Camping Kochgeschirr Set Outdoor）',
-                  sku: '无',
+                  shop: '无',
+                  product: '无',
                   team: '无',
                   saleCount: 1177,
                   saleAmount: '€ 21262.24',
@@ -633,7 +712,8 @@
                 parentId: 2,
                 parent: {
                   asinCombo: '父ASIN：B07D6JCHKF（Overmont Kit de Casseroles Camping）',
-                  sku: '无',
+                  shop: '无',
+                  product: '无',
                   team: '无',
                   saleCount: 72,
                   saleAmount: '€ 1726.59',
@@ -659,28 +739,44 @@
               const fields = summaryFields[summaryType];
               let html = '<table><thead><tr>';
               if(asinType === 'parent') html += '<th></th>';
-              fields.forEach(f => html += `<th>${f.label}</th>`);
+              // 表头渲染，带tip加问号
+              fields.forEach(f => html += `<th${f.style ? ` style="${f.style}"` : ''}>${f.label}${f.tip ? `<span class='field-tip' title='${f.tip}'>？</span>` : ''}</th>`);
               html += '</tr></thead><tbody>';
               if(asinType === 'asin') {
                 asinRows.forEach(row => {
                   html += '<tr>';
-                  fields.forEach(f => html += `<td>${row[f.key] || ''}</td>`);
+                  fields.forEach(f => html += `<td${f.style ? ` style="${f.style}"` : ''}>${row[f.key] || ''}</td>`);
                   html += '</tr>';
                 });
               } else {
                 parentAsinRows.forEach(parent => {
                   html += `<tr class='parent-row' data-parent='${parent.parentId}'><td><button class='expand-btn' onclick='toggleChildRows(${parent.parentId})'>＋</button></td>`;
-                  fields.forEach(f => html += `<td>${parent.parent[f.key] || ''}</td>`);
+                  fields.forEach(f => html += `<td${f.style ? ` style="${f.style}"` : ''}>${parent.parent[f.key] || ''}</td>`);
                   html += '</tr>';
                   parent.children.forEach(child => {
                     html += `<tr class='child-row child-of-${parent.parentId}' style='display:none;'>`;
                     html += '<td></td>';
-                    fields.forEach(f => html += `<td>${child[f.key] || ''}</td>`);
+                    fields.forEach(f => html += `<td${f.style ? ` style="${f.style}"` : ''}>${child[f.key] || ''}</td>`);
                     html += '</tr>';
                   });
                 });
               }
-              html += '</tbody></table>';
+              // 合计行
+              html += '<tfoot><tr class="erp-table-footer">';
+              if(asinType === 'parent') html += '<td>合计</td>';
+              else html += '<td>合计</td>';
+              fields.forEach((f, i) => {
+                if(f.key === 'saleCount') html += '<td>1249</td>'; // 销量统计
+                else if(i > fields.findIndex(ff=>ff.key==='saleCount')) html += '<td>--</td>';
+                else if(i > 0) html += '<td></td>';
+              });
+              html += '</tr></tfoot>';
+              html += '</table>';
+              // 分页栏
+              html += `<div class="erp-table-pagination" style="justify-content:space-between;">
+                <div><span>50条/页</span><span>共3条</span></div>
+                <div><button disabled class="active">1</button><span>前往</span><input type="number" min="1" max="1" value="1" style="width:40px;"><span>页</span></div>
+              </div>`;
               wrap.innerHTML = html;
               // 修正按钮高亮
               var btnParent = document.getElementById('btn-parent-asin');
@@ -752,6 +848,10 @@
               </select>
               <input id="realtime-type-input" placeholder="请输入查询内容" style="min-width:180px;border-radius:0 6px 6px 0;border-left:0;">
             </div>
+            <div class="filter-actions">
+              <button class="filter-action-btn" title="导出">⭳</button>
+              <button class="filter-action-btn" title="刷新">⟳</button>
+            </div>
           </div>
           <!-- 表格 -->
           <div class="erp-table-wrap">
@@ -759,12 +859,9 @@
               <thead>
                 <tr>
                   <th>ASIN信息</th>
-                  <th>店铺/渠道</th>
-                  <th>产品名称/编号/SKU</th>
-                  <th>币种</th>
-                  <th>销量</th>
-                  <th>销售额</th>
-                  <th>访客数</th>
+                  <th>店铺-站点/MSKU</th>
+                  <th>产品名称/硕麦SKU</th>
+                  <th>小计</th>
                   <th>6:00</th>
                   <th>5:00</th>
                   <th>4:00</th>
@@ -792,26 +889,23 @@
                       </div>
                     </div>
                   </td>
-                  <td>Favoto-VC_UK<br>SKU：sku_B09WT9TR36G</td>
-                  <td>产品编号: FT0376</td>
-                  <td>英镑</td>
-                  <td>111</td>
-                  <td>830.68</td>
-                  <td>21</td>
-                  <td>37.45</td>
-                  <td>29.96</td>
-                  <td>10</td>
-                  <td>11</td>
-                  <td>9</td>
-                  <td>4</td>
-                  <td>13</td>
-                  <td>14</td>
-                  <td>2</td>
-                  <td>10</td>
-                  <td>7</td>
-                  <td>6</td>
-                  <td>5</td>
-                  <td>3</td>
+                  <td>Favoto-VC_UK<br>MSKU：sku_B09WT9TR36G</td>
+                  <td>产品名称：Favoto Bike Cover<br>硕麦SKU：FT0376</td>
+                  <td>销量：111<br>销售额：830.68<br>访问量：21</td>
+                  <td>37<br>245.00<br>5</td>
+                  <td>29<br>196.00<br>4</td>
+                  <td>10<br>68.00<br>2</td>
+                  <td>11<br>75.00<br>3</td>
+                  <td>9<br>61.00<br>2</td>
+                  <td>4<br>27.00<br>1</td>
+                  <td>13<br>89.00<br>2</td>
+                  <td>14<br>95.00<br>3</td>
+                  <td>2<br>13.00<br>1</td>
+                  <td>10<br>68.00<br>2</td>
+                  <td>7<br>48.00<br>1</td>
+                  <td>6<br>41.00<br>1</td>
+                  <td>5<br>34.00<br>1</td>
+                  <td>3<br>20.00<br>1</td>
                 </tr>
                 <!-- 可继续添加更多行，或后续用JS渲染 -->
               </tbody>
@@ -820,10 +914,7 @@
                   <td>合计</td>
                   <td></td>
                   <td></td>
-                  <td></td>
                   <td>1591</td>
-                  <td></td>
-                  <td></td>
                   <td>43</td>
                   <td>56</td>
                   <td>119</td>
@@ -845,7 +936,7 @@
           <div class="erp-table-pagination" style="justify-content:space-between;">
             <div>
               <span>50条/页</span>
-              <span>共5条</span>
+              <span>共1条</span>
             </div>
             <div>
               <button disabled class="active">1</button>
