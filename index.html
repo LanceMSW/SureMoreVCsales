@@ -188,6 +188,9 @@
       border-bottom: 1px solid #f0f0f0;
       text-align: left;
       white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      max-width: 320px;
     }
     th {
       background: #f8fafd;
@@ -195,6 +198,23 @@
       color: #333;
       font-size: 14px;
       border-bottom: 2px solid #e6e8eb;
+      position: relative;
+      user-select: none;
+    }
+    .erp-resize-handle {
+      position: absolute;
+      right: 0;
+      top: 0;
+      width: 6px;
+      height: 100%;
+      cursor: col-resize;
+      z-index: 10;
+      background: #e0e6ef; /* 明显背景色，便于看到手柄 */
+      opacity: 0.7;
+    }
+    .erp-resize-handle:hover {
+      background: #409EFF;
+      opacity: 1;
     }
     tr:hover td {
       background: #f7faff;
@@ -360,6 +380,7 @@
             <select><option>全部店铺</option></select>
             <select><option>全部国家</option></select>
             <select><option>请选择分组</option></select>
+            <select><option>请选择团队</option></select>
             <select><option>请选择销售</option></select>
             <select><option>USD</option></select>
             <input placeholder="2025-07-01  -  2025-07-10">
@@ -376,10 +397,11 @@
           <script>
             // 字段定义
             const dayFields = [
-              { key: 'asinCombo', label: 'ASIN组合', style: 'min-width:160px;' },
-              { key: 'shop', label: '店铺-站点/MSKU', style: 'min-width:120px;' },
-              { key: 'product', label: '产品名称/硕麦SKU', style: 'min-width:140px;' },
-              { key: 'team', label: '团队/销售负责人', style: 'min-width:110px;' },
+              { key: 'asinCombo', label: 'ASIN信息', style: 'min-width:160px;' },
+              { key: 'productSku', label: '产品名称/硕麦SKU', style: 'min-width:140px;' },
+              { key: 'msku', label: 'MSKU', style: 'min-width:90px;' },
+              { key: 'team', label: '团队', style: 'min-width:80px;' },
+              { key: 'owner', label: '销售负责人', style: 'min-width:90px;' },
               { key: 'stock', label: '库存报告数据' },
               { key: 'subtotal', label: '小计' },
               { key: 'd1', label: '2025-07-10' },
@@ -393,19 +415,21 @@
             // 示例数据
             const dayAsinRows = [
               {
-                asinCombo: `<div style='display:flex;align-items:flex-start;gap:4px;'><img src='https://via.placeholder.com/32' style='width:32px;height:32px;border-radius:4px;object-fit:cover;'><div>OVERMONT Camping Kochgeschirr Set<br><a href='#' style='color:#409EFF;text-decoration:underline;font-size:13px;'>B07D6JCHKS</a><span style='color:#888;font-size:13px;'>Overmont VC_DE</span></div></div>`,
-                shop: 'Overmont VC_DE<br>MSKU：sku_B07D6JCHKS',
-                product: 'OVERMONT Camping Kochgeschirr Set<br>硕麦SKU：O505779',
-                team: '团队：德国组<br>销售负责人：张三',
+                asinCombo: `<div style='display:flex;align-items:flex-start;gap:4px;'><img src='https://via.placeholder.com/32' style='width:32px;height:32px;border-radius:4px;object-fit:cover;'><div>OVERMONT Camping Kochgeschirr Set<br><span style='color:#222;font-weight:bold;font-size:13px;'>德国 </span><a href='#' style='color:#409EFF;text-decoration:underline;font-size:13px;'>sku_B07D6JCHKS</a><span style='color:#888;font-size:13px;'>Overmont VC_DE</span></div></div>`,
+                productSku: 'OVERMONT Camping Kochgeschirr Set<br>O505779',
+                msku: 'sku_B07D6JCHKS',
+                team: '德国组',
+                owner: '张三',
                 stock: '采购数量：494<br>接收数量：--<br>库存数量：404<br>VC理论在库：90',
                 subtotal: 838,
                 d1: 45, d2: 218, d3: 171, d4: 60, d5: 72, d6: 48, d7: 43
               },
               {
-                asinCombo: `<div style='display:flex;align-items:flex-start;gap:4px;'><img src='https://via.placeholder.com/32' style='width:32px;height:32px;border-radius:4px;object-fit:cover;'><div>OVERMONT Camping Cookware Set<br><a href='#' style='color:#409EFF;text-decoration:underline;font-size:13px;'>B07D6JCHKT</a><span style='color:#888;font-size:13px;'>Overmont VC_UK</span></div></div>`,
-                shop: 'Overmont VC_UK<br>MSKU：sku_B07D6JCHKT',
-                product: 'OVERMONT Camping Cookware Set<br>硕麦SKU：O505780',
-                team: '团队：英国组<br>销售负责人：李四',
+                asinCombo: `<div style='display:flex;align-items:flex-start;gap:4px;'><img src='https://via.placeholder.com/32' style='width:32px;height:32px;border-radius:4px;object-fit:cover;'><div>OVERMONT Camping Cookware Set<br><span style='color:#222;font-weight:bold;font-size:13px;'>英国 </span><a href='#' style='color:#409EFF;text-decoration:underline;font-size:13px;'>sku_B07D6JCHKT</a><span style='color:#888;font-size:13px;'>Overmont VC_UK</span></div></div>`,
+                productSku: 'OVERMONT Camping Cookware Set<br>O505780',
+                msku: 'sku_B07D6JCHKT',
+                team: '英国组',
+                owner: '李四',
                 stock: '采购数量：494<br>接收数量：--<br>库存数量：404<br>VC理论在库：90',
                 subtotal: 267,
                 d1: 17, d2: 57, d3: 58, d4: 19, d5: 27, d6: 14, d7: 13
@@ -416,9 +440,10 @@
                 parentId: 1,
                 parent: {
                   asinCombo: '父ASIN：B07D6JCHKS（Overmont Camping Kochgeschirr Set）',
-                  shop: '无',
-                  product: '无',
+                  productSku: '无',
+                  msku: '无',
                   team: '无',
+                  owner: '无',
                   stock: '采购数量：494<br>接收数量：--<br>库存数量：404<br>VC理论在库：90',
                   subtotal: 1105,
                   d1: 62, d2: 275, d3: 229, d4: 79, d5: 99, d6: 62, d7: 56
@@ -436,21 +461,62 @@
               if(dayAsinType === 'parent') html += '<th></th>';
               dayFields.forEach(f => html += `<th${f.style ? ` style="${f.style}"` : ''}>${f.label}</th>`);
               html += '</tr></thead><tbody>';
+              function getRatioCell(val, huanbi, huanbiUp, huanbiPct, tongbi, tongbiUp, tongbiPct) {
+                // huanbiUp/tongbiUp: true=升 false=降 null=无
+                let upArrow = '<span style="color:#e34d59;font-size:18px;font-weight:bold;vertical-align:middle;text-shadow:0 1px 2px #fff,0 0 2px #e34d59;letter-spacing:1px;margin:0 2px;">↑</span>';
+                let downArrow = '<span style="color:#1bb468;font-size:18px;font-weight:bold;vertical-align:middle;text-shadow:0 1px 2px #fff,0 0 2px #1bb468;letter-spacing:1px;margin:0 2px;">↓</span>';
+                let huanbiStr = huanbiUp===null ? '环比：-- / --' : `环比：${huanbiUp?upArrow:downArrow}${huanbi} / ${huanbiPct}`;
+                let tongbiStr = tongbiUp===null ? '同比：-- / --' : `同比：${tongbiUp?upArrow:downArrow}${tongbi} / ${tongbiPct}`;
+                return `<div>${val}</div><div style='font-size:12px;color:#888;line-height:1.3;margin-top:2px;'>${huanbiStr}<br>${tongbiStr}</div>`;
+              }
+              // 示例数据（可根据实际数据结构调整）
+              const demoRatio = [
+                // d1-d7
+                { val: 45, huanbi: 5, huanbiUp: true, huanbiPct: '12%', tongbi: 8, tongbiUp: true, tongbiPct: '22%' },
+                { val: 218, huanbi: 10, huanbiUp: false, huanbiPct: '4%', tongbi: 20, tongbiUp: false, tongbiPct: '8%' },
+                { val: 171, huanbi: 0, huanbiUp: null, huanbiPct: '--', tongbi: '--', tongbiUp: null, tongbiPct: '--' },
+                { val: 60, huanbi: 2, huanbiUp: true, huanbiPct: '3%', tongbi: 1, tongbiUp: false, tongbiPct: '2%' },
+                { val: 72, huanbi: 8, huanbiUp: true, huanbiPct: '12%', tongbi: 10, tongbiUp: true, tongbiPct: '16%' },
+                { val: 48, huanbi: 3, huanbiUp: false, huanbiPct: '6%', tongbi: 5, tongbiUp: false, tongbiPct: '9%' },
+                { val: 43, huanbi: 0, huanbiUp: null, huanbiPct: '--', tongbi: '--', tongbiUp: null, tongbiPct: '--' }
+              ];
               if(dayAsinType === 'asin' || dayAsinType === 'sku') {
-                dayAsinRows.forEach(row => {
+                dayAsinRows.forEach((row, rowIdx) => {
                   html += '<tr>';
-                  dayFields.forEach(f => html += `<td${f.style ? ` style="${f.style}"` : ''}>${row[f.key] || ''}</td>`);
+                  dayFields.forEach((f, i) => {
+                    if(i >= 8) { // 日期字段
+                      // 用demoRatio演示，实际应用时可用row[f.key]和row[f.key+'_huanbi']等
+                      const ratio = demoRatio[i-8] || {val: row[f.key]||'', huanbi: '--', huanbiUp: null, huanbiPct: '--', tongbi: '--', tongbiUp: null, tongbiPct: '--'};
+                      html += `<td${f.style ? ` style="${f.style}"` : ''}>${getRatioCell(ratio.val, ratio.huanbi, ratio.huanbiUp, ratio.huanbiPct, ratio.tongbi, ratio.tongbiUp, ratio.tongbiPct)}</td>`;
+                    } else {
+                      html += `<td${f.style ? ` style="${f.style}"` : ''}>${row[f.key] || ''}</td>`;
+                    }
+                  });
                   html += '</tr>';
                 });
               } else {
                 dayParentAsinRows.forEach(parent => {
                   html += `<tr class='parent-row' data-parent='${parent.parentId}'><td><button class='expand-btn' onclick='toggleChildRows(${parent.parentId})'>＋</button></td>`;
-                  dayFields.forEach(f => html += `<td${f.style ? ` style="${f.style}"` : ''}>${parent.parent[f.key] || ''}</td>`);
+                  dayFields.forEach((f, i) => {
+                    if(i >= 8) {
+                      const ratio = demoRatio[i-8] || {val: parent.parent[f.key]||'', huanbi: '--', huanbiUp: null, huanbiPct: '--', tongbi: '--', tongbiUp: null, tongbiPct: '--'};
+                      html += `<td${f.style ? ` style="${f.style}"` : ''}>${getRatioCell(ratio.val, ratio.huanbi, ratio.huanbiUp, ratio.huanbiPct, ratio.tongbi, ratio.tongbiUp, ratio.tongbiPct)}</td>`;
+                    } else {
+                      html += `<td${f.style ? ` style="${f.style}"` : ''}>${parent.parent[f.key] || ''}</td>`;
+                    }
+                  });
                   html += '</tr>';
                   parent.children.forEach(child => {
                     html += `<tr class='child-row child-of-${parent.parentId}' style='display:none;'>`;
                     html += '<td></td>';
-                    dayFields.forEach(f => html += `<td${f.style ? ` style="${f.style}"` : ''}>${child[f.key] || ''}</td>`);
+                    dayFields.forEach((f, i) => {
+                      if(i >= 8) {
+                        const ratio = demoRatio[i-8] || {val: child[f.key]||'', huanbi: '--', huanbiUp: null, huanbiPct: '--', tongbi: '--', tongbiUp: null, tongbiPct: '--'};
+                        html += `<td${f.style ? ` style="${f.style}"` : ''}>${getRatioCell(ratio.val, ratio.huanbi, ratio.huanbiUp, ratio.huanbiPct, ratio.tongbi, ratio.tongbiUp, ratio.tongbiPct)}</td>`;
+                      } else {
+                        html += `<td${f.style ? ` style="${f.style}"` : ''}>${child[f.key] || ''}</td>`;
+                      }
+                    });
                     html += '</tr>';
                   });
                 });
@@ -473,6 +539,8 @@
                 <div><button disabled class="active">1</button><span>前往</span><input type="number" min="1" max="1" value="1" style="width:40px;"><span>页</span></div>
               </div>`;
               wrap.innerHTML = html;
+              // 可变列宽，基础字段窄，数据字段宽
+              addResizableColumns('#day-table-wrap', [120, 80, 80, 100, 80, 70, 70, 120, 90, 90, 90, 90, 90, 90, 90, 90]);
               // 修正按钮高亮
               var btnParent = document.getElementById('btn-day-parent-asin');
               var btnAsin = document.getElementById('btn-day-asin');
@@ -585,6 +653,7 @@
             <select><option>全部国家</option></select>
             <select><option>全部店铺</option></select>
             <select><option>请选择分组</option></select>
+            <select><option>请选择团队</option></select>
             <select><option>请选择销售</option></select>
             <input placeholder="2025-07-01  -  2025-07-10">
             <input placeholder="搜索ASIN">
@@ -604,10 +673,11 @@
             // 字段定义，增加tip属性
             const summaryFields = {
               manufacturing: [
-                { key: 'asinCombo', label: 'ASIN组合', style: 'min-width:180px;' },
-                { key: 'shop', label: '店铺-站点/MSKU', style: 'min-width:140px;' },
+                { key: 'asinInfo', label: 'ASIN信息', style: 'min-width:180px;' },
+                { key: 'msku', label: 'MSKU', style: 'min-width:90px;' },
                 { key: 'product', label: '产品名称/硕麦SKU', style: 'min-width:160px;' },
-                { key: 'team', label: '团队/销售负责人', style: 'min-width:120px;' },
+                { key: 'team', label: '团队', style: 'min-width:80px;' },
+                { key: 'owner', label: '销售负责人', style: 'min-width:90px;' },
                 { key: 'saleCount', label: '销量统计', tip: '亚马逊卖给客户的订单数量' },
                 { key: 'saleAmount', label: '销售金额', tip: '亚马逊卖给客户的订单总金额' },
                 { key: 'avgDaySale', label: '平均每日销量' },
@@ -621,10 +691,11 @@
                 { key: 'refundRate', label: '退货率', tip: '退货数量/销售数量' }
               ],
               sourcing: [
-                { key: 'asinCombo', label: 'ASIN组合', style: 'min-width:180px;' },
-                { key: 'shop', label: '店铺-站点/MSKU', style: 'min-width:140px;' },
+                { key: 'asinInfo', label: 'ASIN信息', style: 'min-width:180px;' },
+                { key: 'msku', label: 'MSKU', style: 'min-width:90px;' },
                 { key: 'product', label: '产品名称/硕麦SKU', style: 'min-width:160px;' },
-                { key: 'team', label: '团队/销售负责人', style: 'min-width:120px;' },
+                { key: 'team', label: '团队', style: 'min-width:80px;' },
+                { key: 'owner', label: '销售负责人', style: 'min-width:90px;' },
                 { key: 'outCount', label: '出货数量', tip: '亚马逊仓库出货数量' },
                 { key: 'outAmount', label: '出货金额', tip: '亚马逊仓库出货总成本(po供货成本)' },
                 { key: 'refundCount', label: '退货数量', tip: '客户退到亚马逊仓库的数量' },
@@ -636,10 +707,11 @@
             // 示例数据（多条）
             const asinRows = [
               {
-                asinCombo: `<div style='display:flex;align-items:flex-start;gap:4px;'><img src='https://via.placeholder.com/32' style='width:32px;height:32px;border-radius:4px;object-fit:cover;'><div>OVERMONT Camping Kochgeschirr Set Outdoor<br><a href='#' style='color:#409EFF;text-decoration:underline;font-size:13px;'>B07D6JCHKS</a><span style='color:#888;font-size:13px;'>Overmont-VC_DE</span></div></div>`,
-                shop: 'Overmont-VC_DE<br>MSKU：sku_B07D6JCHKS',
-                product: 'OVERMONT Camping Kochgeschirr Set Outdoor<br>硕麦SKU：O505759',
-                team: '团队：德国组<br>销售负责人：张三',
+                asinInfo: `<div style='display:flex;align-items:flex-start;gap:4px;'><img src='https://via.placeholder.com/32' style='width:32px;height:32px;border-radius:4px;object-fit:cover;'><div>OVERMONT Camping Kochgeschirr Set Outdoor<br><span style='color:#222;font-weight:bold;font-size:13px;'>美国 </span><a href='#' style='color:#409EFF;text-decoration:underline;font-size:13px;'>sku_B07D6JCHKS</a><span style='color:#888;font-size:13px;'>Overmont VC_DE</span></div></div>`,
+                msku: 'sku_B07D6JCHKS',
+                product: 'OVERMONT Camping Kochgeschirr Set Outdoor<br>O505759',
+                team: '德国组',
+                owner: '张三',
                 saleCount: 838,
                 saleAmount: '€ 19535.65',
                 avgDaySale: 83.8,
@@ -653,10 +725,11 @@
                 refundRate: '2.63 %'
               },
               {
-                asinCombo: `<div style='display:flex;align-items:flex-start;gap:4px;'><img src='https://via.placeholder.com/32' style='width:32px;height:32px;border-radius:4px;object-fit:cover;'><div>OVERMONT Camping Cookware Set Outdoor<br><a href='#' style='color:#409EFF;text-decoration:underline;font-size:13px;'>B07D6JCHKT</a><span style='color:#888;font-size:13px;'>Overmont-VC_UK</span></div></div>`,
-                shop: 'Overmont-VC_UK<br>MSKU：sku_B07D6JCHKT',
-                product: 'OVERMONT Camping Cookware Set Outdoor<br>硕麦SKU：O505760',
-                team: '团队：英国组<br>销售负责人：李四',
+                asinInfo: `<div style='display:flex;align-items:flex-start;gap:4px;'><img src='https://via.placeholder.com/32' style='width:32px;height:32px;border-radius:4px;object-fit:cover;'><div>OVERMONT Camping Cookware Set Outdoor<br><span style='color:#222;font-weight:bold;font-size:13px;'>英国 </span><a href='#' style='color:#409EFF;text-decoration:underline;font-size:13px;'>sku_B07D6JCHKT</a><span style='color:#888;font-size:13px;'>Overmont VC_UK</span></div></div>`,
+                msku: 'sku_B07D6JCHKT',
+                product: 'OVERMONT Camping Cookware Set Outdoor<br>O505760',
+                team: '英国组',
+                owner: '李四',
                 saleCount: 267,
                 saleAmount: '£ 5378.00',
                 avgDaySale: 26.7,
@@ -670,10 +743,11 @@
                 refundRate: '3.00 %'
               },
               {
-                asinCombo: `<div style='display:flex;align-items:flex-start;gap:4px;'><img src='https://via.placeholder.com/32' style='width:32px;height:32px;border-radius:4px;object-fit:cover;'><div>OVERMONT Kit de Casseroles Camping<br><a href='#' style='color:#409EFF;text-decoration:underline;font-size:13px;'>B07D6JCHKF</a><span style='color:#888;font-size:13px;'>Overmont-VC_FR</span></div></div>`,
-                shop: 'Overmont-VC_FR<br>MSKU：sku_B07D6JCHKF',
-                product: 'OVERMONT Kit de Casseroles Camping<br>硕麦SKU：O505761',
-                team: '团队：法国组<br>销售负责人：王五',
+                asinInfo: `<div style='display:flex;align-items:flex-start;gap:4px;'><img src='https://via.placeholder.com/32' style='width:32px;height:32px;border-radius:4px;object-fit:cover;'><div>OVERMONT Kit de Casseroles Camping<br><span style='color:#222;font-weight:bold;font-size:13px;'>法国 </span><a href='#' style='color:#409EFF;text-decoration:underline;font-size:13px;'>sku_B07D6JCHKF</a><span style='color:#888;font-size:13px;'>Overmont VC_FR</span></div></div>`,
+                msku: 'sku_B07D6JCHKF',
+                product: 'OVERMONT Kit de Casseroles Camping<br>O505761',
+                team: '法国组',
+                owner: '王五',
                 saleCount: 72,
                 saleAmount: '€ 1726.59',
                 avgDaySale: 7.2,
@@ -691,10 +765,12 @@
               {
                 parentId: 1,
                 parent: {
-                  asinCombo: '父ASIN：B07D6JCHKS（Overmont Camping Kochgeschirr Set Outdoor）',
+                  asinInfo: '父ASIN：B07D6JCHKS（Overmont Camping Kochgeschirr Set Outdoor）',
                   shop: '无',
                   product: '无',
+                  sku: '无',
                   team: '无',
+                  owner: '无',
                   saleCount: 1177,
                   saleAmount: '€ 21262.24',
                   avgDaySale: 39.2,
@@ -712,10 +788,12 @@
               {
                 parentId: 2,
                 parent: {
-                  asinCombo: '父ASIN：B07D6JCHKF（Overmont Kit de Casseroles Camping）',
+                  asinInfo: '父ASIN：B07D6JCHKF（Overmont Kit de Casseroles Camping）',
                   shop: '无',
                   product: '无',
+                  sku: '无',
                   team: '无',
+                  owner: '无',
                   saleCount: 72,
                   saleAmount: '€ 1726.59',
                   avgDaySale: 7.2,
@@ -779,6 +857,8 @@
                 <div><button disabled class="active">1</button><span>前往</span><input type="number" min="1" max="1" value="1" style="width:40px;"><span>页</span></div>
               </div>`;
               wrap.innerHTML = html;
+              // 可变列宽，基础字段窄，数据字段宽
+              addResizableColumns('#summary-table-wrap', [160, 80, 120, 70, 70, 110, 110, 90, 90, 90, 90, 90, 90, 90, 90, 90]);
               // 修正按钮高亮
               var btnParent = document.getElementById('btn-parent-asin');
               var btnAsin = document.getElementById('btn-asin');
@@ -836,9 +916,14 @@
           </div>
           <!-- 筛选区 -->
           <div class="erp-filter-bar">
+            <div class="btn-group" style="margin-right:8px;">
+              <button id="btn-realtime-site-time" class="active" onclick="setRealtimeTimeType('site')">站点时间</button>
+              <button id="btn-realtime-bj-time" class="secondary" onclick="setRealtimeTimeType('bj')">北京时间</button>
+            </div>
             <select><option>全部店铺</option></select>
             <select><option>全部国家</option></select>
             <select><option>请选择分组</option></select>
+            <select><option>请选择团队</option></select>
             <select><option>请选择销售</option></select>
             <select><option>币种</option></select>
             <div style="display:flex;align-items:center;">
@@ -855,85 +940,7 @@
             </div>
           </div>
           <!-- 表格 -->
-          <div class="erp-table-wrap">
-            <table>
-              <thead>
-                <tr>
-                  <th>ASIN信息</th>
-                  <th>店铺-站点/MSKU</th>
-                  <th>产品名称/硕麦SKU</th>
-                  <th>小计</th>
-                  <th>6:00</th>
-                  <th>5:00</th>
-                  <th>4:00</th>
-                  <th>3:00</th>
-                  <th>2:00</th>
-                  <th>1:00</th>
-                  <th>0:00</th>
-                  <th>23:00</th>
-                  <th>22:00</th>
-                  <th>21:00</th>
-                  <th>20:00</th>
-                  <th>19:00</th>
-                  <th>18:00</th>
-                  <th>17:00</th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr>
-                  <td>
-                    <div style="display:flex;align-items:flex-start;gap:4px;">
-                      <img src="https://via.placeholder.com/32" style="width:32px;height:32px;border-radius:4px;object-fit:cover;">
-                      <div>
-                        Favoto Bike Cover for 2 Bikes<br>
-                        <a href="#" style="color:#409EFF;text-decoration:underline;font-size:13px;">B09WT9TR36G</a>
-                      </div>
-                    </div>
-                  </td>
-                  <td>Favoto-VC_UK<br>MSKU：sku_B09WT9TR36G</td>
-                  <td>产品名称：Favoto Bike Cover<br>硕麦SKU：FT0376</td>
-                  <td>销量：111<br>销售额：830.68<br>访问量：21</td>
-                  <td>37<br>245.00<br>5</td>
-                  <td>29<br>196.00<br>4</td>
-                  <td>10<br>68.00<br>2</td>
-                  <td>11<br>75.00<br>3</td>
-                  <td>9<br>61.00<br>2</td>
-                  <td>4<br>27.00<br>1</td>
-                  <td>13<br>89.00<br>2</td>
-                  <td>14<br>95.00<br>3</td>
-                  <td>2<br>13.00<br>1</td>
-                  <td>10<br>68.00<br>2</td>
-                  <td>7<br>48.00<br>1</td>
-                  <td>6<br>41.00<br>1</td>
-                  <td>5<br>34.00<br>1</td>
-                  <td>3<br>20.00<br>1</td>
-                </tr>
-                <!-- 可继续添加更多行，或后续用JS渲染 -->
-              </tbody>
-              <tfoot>
-                <tr class="erp-table-footer">
-                  <td>合计</td>
-                  <td></td>
-                  <td></td>
-                  <td>1591</td>
-                  <td>43</td>
-                  <td>56</td>
-                  <td>119</td>
-                  <td>121</td>
-                  <td>123</td>
-                  <td>86</td>
-                  <td>106</td>
-                  <td>111</td>
-                  <td>87</td>
-                  <td>97</td>
-                  <td>113</td>
-                  <td>110</td>
-                  <td>88</td>
-                  <td>96</td>
-                </tr>
-              </tfoot>
-            </table>
-          </div>
+          <div class="erp-table-wrap"></div>
           <div class="erp-table-pagination" style="justify-content:space-between;">
             <div>
               <span>50条/页</span>
@@ -961,14 +968,171 @@
       if(tab === 'day') {
         document.getElementById('tab-day').classList.add('active');
         document.getElementById('content-day').style.display = '';
+        setTimeout(function(){
+          addResizableColumns('#day-table-wrap', [120, 80, 80, 100, 80, 70, 70, 120, 90, 90, 90, 90, 90, 90, 90, 90]);
+        }, 0);
       } else if(tab === 'summary') {
         document.getElementById('tab-summary').classList.add('active');
         document.getElementById('content-summary').style.display = '';
+        setTimeout(function(){
+          addResizableColumns('#summary-table-wrap', [160, 80, 120, 70, 70, 110, 110, 90, 90, 90, 90, 90, 90, 90, 90, 90]);
+        }, 0);
       } else if(tab === 'realtime') {
         document.getElementById('tab-realtime').classList.add('active');
         document.getElementById('content-realtime').style.display = '';
+        setTimeout(function(){
+          addResizableColumns('#content-realtime .erp-table-wrap', [160, 100, 120, 90, 90, 90, 90, 90, 90, 90, 90, 90, 90, 90, 90, 90, 90, 90]);
+        }, 0);
       }
     }
+  </script>
+  <script>
+    function addResizableColumns(tableId, defaultWidths) {
+      const table = document.querySelector(tableId + ' table');
+      if (!table) return;
+      const ths = table.querySelectorAll('th');
+      ths.forEach((th, i) => {
+        th.style.width = (defaultWidths[i] || 80) + 'px';
+        th.style.minWidth = '48px';
+        th.style.maxWidth = '600px';
+        // 添加resize handle
+        if (i < ths.length - 1) {
+          const handle = document.createElement('div');
+          handle.className = 'erp-resize-handle';
+          th.appendChild(handle);
+          let startX, startWidth;
+          handle.addEventListener('mousedown', function(e) {
+            startX = e.pageX;
+            startWidth = th.offsetWidth;
+            document.body.style.cursor = 'col-resize';
+            function onMove(e2) {
+              let newWidth = Math.max(48, Math.min(600, startWidth + e2.pageX - startX));
+              th.style.width = newWidth + 'px';
+            }
+            function onUp() {
+              document.removeEventListener('mousemove', onMove);
+              document.removeEventListener('mouseup', onUp);
+              document.body.style.cursor = '';
+            }
+            document.addEventListener('mousemove', onMove);
+            document.addEventListener('mouseup', onUp);
+          });
+        }
+      });
+      // 设置所有td的title为内容
+      table.querySelectorAll('td').forEach(td => {
+        if (td.textContent && td.textContent.length > 0) {
+          td.title = td.textContent.replace(/\s+/g, ' ').trim();
+        }
+      });
+    }
+  </script>
+  <script>
+    let realtimeTimeType = 'site';
+    function setRealtimeTimeType(type) {
+      realtimeTimeType = type;
+      var btnSite = document.getElementById('btn-realtime-site-time');
+      var btnBJ = document.getElementById('btn-realtime-bj-time');
+      if(btnSite && btnBJ) {
+        btnSite.classList.remove('active','secondary');
+        btnBJ.classList.remove('active','secondary');
+        if(type === 'site') {
+          btnSite.classList.add('active');
+          btnBJ.classList.add('secondary');
+        } else {
+          btnBJ.classList.add('active');
+          btnSite.classList.add('secondary');
+        }
+      }
+      renderRealtimeTable();
+    }
+    function renderRealtimeTable() {
+      const wrap = document.querySelector('#content-realtime .erp-table-wrap');
+      if(!wrap) return;
+      // 站点时间模式
+      if(realtimeTimeType === 'site') {
+        // 生成表头
+        let date1 = '2025-07-16', date2 = '2025-07-15';
+        // 16号24:00-01:00
+        let hours16 = [];
+        for(let i=24;i>=1;i--) hours16.push(i.toString().padStart(2,'0')+':00');
+        // 15号24:00-01:00
+        let hours15 = [];
+        for(let i=24;i>=1;i--) hours15.push(i.toString().padStart(2,'0')+':00');
+        let thead = '<thead><tr>';
+        thead += '<th rowspan="2">ASIN信息</th><th rowspan="2">MSKU</th><th rowspan="2">产品名称/硕麦SKU</th><th rowspan="2">团队</th><th rowspan="2">销售负责人</th><th rowspan="2">小计</th>';
+        thead += `<th colspan="24">${date1}</th><th colspan="24">${date2}</th>`;
+        thead += '</tr><tr>';
+        hours16.forEach(h=>thead+=`<th>${h}</th>`);
+        hours15.forEach(h=>thead+=`<th>${h}</th>`);
+        thead += '</tr></thead>';
+        // 示例数据
+        let row1 = '<tr>';
+        row1 += `<td>...ASIN信息...</td><td>sku_B09WT9TR36G</td><td>Favoto Bike Cover<br>FT0376</td><td>英国组</td><td>王五</td><td>销量：111<br>销售额：830.68<br>访问量：21</td>`;
+        for(let i=0;i<48;i++) {
+          let v1 = Math.floor(Math.random()*100);
+          let v2 = (Math.random()*1000).toFixed(2);
+          let v3 = Math.floor(Math.random()*50);
+          row1 += `<td>${v1}<br>${v2}<br>${v3}</td>`;
+        }
+        row1 += '</tr>';
+
+        // 第二行数据，19:00-24:00为--，其余为随机数
+        let row2 = '<tr>';
+        row2 += `<td>...ASIN信息2...</td><td>sku_B09WT9TR36H</td><td>Favoto Bike Cover2<br>FT0377</td><td>英国组</td><td>李四</td><td>销量：222<br>销售额：1660.88<br>访问量：42</td>`;
+        for(let i=0;i<48;i++) {
+          // 17号19:00在hours16[6]，即第6列（0-base）
+          if(i<6) {
+            row2 += `<td>--<br>--<br>--</td>`;
+          } else {
+            let v1 = Math.floor(Math.random()*100);
+            let v2 = (Math.random()*1000).toFixed(2);
+            let v3 = Math.floor(Math.random()*50);
+            row2 += `<td>${v1}<br>${v2}<br>${v3}</td>`;
+          }
+        }
+        row2 += '</tr>';
+        let tbody = `<tbody>${row1}${row2}</tbody>`;
+        wrap.innerHTML = `<table>${thead}${tbody}</table>`;
+        addResizableColumns('#content-realtime .erp-table-wrap', [160, 100, 120, 90, 90, 90, ...Array(48).fill(70)]);
+      } else {
+        // 北京时间模式
+        let hours = [];
+        for(let i=11;i>=0;i--) hours.push(i.toString().padStart(2,'0'));
+        for(let i=23;i>=12;i--) hours.push(i.toString().padStart(2,'0'));
+        // hours: 11,10,9,...0,23,22,...12 共24
+        let thead = '<thead><tr>';
+        thead += '<th>ASIN信息</th><th>MSKU</th><th>产品名称/硕麦SKU</th><th>团队</th><th>销售负责人</th><th>小计</th>';
+        hours.forEach(h=>thead+=`<th>${h}:00</th>`);
+        thead += '</tr></thead>';
+        // 两行数据，结构同站点时间
+        let row1 = '<tr>';
+        row1 += `<td>...ASIN信息...</td><td>sku_B09WT9TR36G</td><td>Favoto Bike Cover<br>FT0376</td><td>英国组</td><td>王五</td><td>销量：111<br>销售额：830.68<br>访问量：21</td>`;
+        for(let i=0;i<24;i++) {
+          let v1 = Math.floor(Math.random()*100);
+          let v2 = (Math.random()*1000).toFixed(2);
+          let v3 = Math.floor(Math.random()*50);
+          row1 += `<td>${v1}<br>${v2}<br>${v3}</td>`;
+        }
+        row1 += '</tr>';
+        let row2 = '<tr>';
+        row2 += `<td>...ASIN信息2...</td><td>sku_B09WT9TR36H</td><td>Favoto Bike Cover2<br>FT0377</td><td>英国组</td><td>李四</td><td>销量：222<br>销售额：1660.88<br>访问量：42</td>`;
+        for(let i=0;i<24;i++) {
+          let v1 = Math.floor(Math.random()*100);
+          let v2 = (Math.random()*1000).toFixed(2);
+          let v3 = Math.floor(Math.random()*50);
+          row2 += `<td>${v1}<br>${v2}<br>${v3}</td>`;
+        }
+        row2 += '</tr>';
+        let tbody = `<tbody>${row1}${row2}</tbody>`;
+        wrap.innerHTML = `<table>${thead}${tbody}</table>`;
+        addResizableColumns('#content-realtime .erp-table-wrap', [160, 100, 120, 90, 90, 90, ...Array(24).fill(70)]);
+      }
+    }
+    // 页面初次加载时渲染实时表格
+    window.addEventListener('DOMContentLoaded', function() {
+      renderRealtimeTable();
+    });
   </script>
 </body>
 </html> 
